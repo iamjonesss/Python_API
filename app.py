@@ -1,5 +1,8 @@
 from flask import jsonify, request
-from config_geral import app
+from general_config import app, conn
 
 def init_app():
-    pass
+    livros = conn.get_books_json()
+    
+
+init_app()

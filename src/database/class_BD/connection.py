@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import json
 
 Base = declarative_base()
 
@@ -16,7 +17,7 @@ class SQL_Connection:
     session: A sessão do SQLAlchemy
     """
     
-    def init(self, username, password, host, port, database):
+    def __init__(self, username, password, host, port, database):
         """
         Inicializa os atributos de conexão com o banco de dados
         
@@ -28,7 +29,7 @@ class SQL_Connection:
         database: Nome do banco de dados
         """
         
-        self.database_url = f'mysql+pymysql://{username}:{password}@{host}:{port}/{database}'
+        self.database_url = f'mysql://{username}:{password}@{host}:{port}/{database}'
         self.engine = create_engine(self.database_url, echo=True)
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
@@ -97,6 +98,20 @@ class SQL_Connection:
         self.session.delete(book)
         self.session.commit()
         
+        
+    def get_books_json(self):
+        """
+        Retorna todos os livros do banco de dados em formato JSON
+        
+        Returns:
+        books_json: Lista de livros em formato JSON        
+        """
+        
+        books = self.get_books()
+        books_dict = [book.to_dict() for book in books]
+        books_json = json.dumps(books_dict, ensure_ascii=False, indent=4)
+        return books_json
+        
 class Book(Base):
     """
     Classe que representa a tabela de livros no banco de dados
@@ -118,3 +133,18 @@ class Book(Base):
     genre = Column(String, nullable=False)
     publisher = Column(String, nullable=False)
     
+    def to_dict(self):
+        """
+        Converte o objeto Book em um dicionário
+        
+        Returns:
+        dict: Dicionário representando o livro
+        """
+        return {
+            'id': self.id,
+            'name': self.name,
+            'release_date': self.release_date.isoformat(),
+            'author': self.author,
+            'genre': self.genre,
+            'publisher': self.publisher
+        }
